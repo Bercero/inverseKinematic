@@ -1,0 +1,16 @@
+import "/home/robocomp/interfaces/IDSLs/JointMotor.idsl";
+import "/robocomp/interfaces/IDSLs/JoystickAdapter.idsl";
+
+Component InverseKinematics
+{
+	Communications
+	{
+		//implements interfaceName;
+		requires JointMotor;
+		subscribesTo JoystickAdapter;
+		//publishes topicToPublish;
+	};
+	language python;
+	//gui Qt(QWidget);
+};
+
