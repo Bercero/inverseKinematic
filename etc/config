@@ -1,9 +1,10 @@
 # Endpoints for subscriptions
-JoystickAdapterTopic.Endpoints=tcp -p 0
+JoystickAdapterTopic.Endpoints=tcp -p 14000
 
 
 # Proxies for required interfaces
-JointMotorProxy = jointmotor:tcp -h localhost -p 0
+JointMotorProxy = jointmotor:tcp -h localhost -p 20000
+
 
 
 # This property is used by the clients to connect to IceStorm.
@@ -16,4 +17,5 @@ Ice.Trace.Protocol=0
 Ice.ACM.Client=10
 Ice.ACM.Server=10
 
-
+leg=1
+max_speed=1

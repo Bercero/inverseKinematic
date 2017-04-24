@@ -30,9 +30,9 @@ if len(ROBOCOMP)<1:
 	sys.exit()
 	
 
-preStr = "-I"+ROBOCOMP+"/interfaces/ --all "+ROBOCOMP+"/interfaces/"
+preStr = "-I/opt/robocomp/interfaces/ -I"+ROBOCOMP+"/interfaces/ --all /opt/robocomp/interfaces/"
 
-Ice.loadSlice(preStr+"JoystickAdapter.ice")
+Ice.loadSlice(preStr+"JointMotor.ice")
 from RoboCompJoystickAdapter import *
 
 class JoystickAdapterI(JoystickAdapter):

@@ -27,8 +27,16 @@ def ik(x, y):
         alpha = asin(senoAlphaP)
 
     gama = 0.0
-    if r2 != 0:
-        gama = asin(y / sqrt(r2))
+    #if r2 != 0: TODO
+    #     gama = asin(y / sqrt(r2))
+    if x > 0:
+        gama= atan(y/x)
+    elif x ==0:
+        gama= asin(y/r)
+    elif y >= 0:
+        gama= (pi/2)- atan(y/x)
+    else:
+        gama= -pi+ atan(y/x)
 
     alpha = gama + alphaP
     beta=0.0
@@ -39,3 +47,4 @@ def ik(x, y):
         beta = betaP - pi
 
     print(alpha, beta)
+    print gama
