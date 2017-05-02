@@ -36,134 +36,111 @@ class SpecificWorker(GenericWorker):
         self.timer.timeout.connect(self.compute)
         self.Period = 10
         self.timer.start(self.Period)
-        self.x=0.0
-        self.y=0.0
-        self.l1=1
-        self.l2=1
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+        self.l0 = self.l1 = self.l2 = 0
+        self.shoulder = self.elbow = self.wrist = 0
+        self.max_speed = 0
 
     def setParams(self, params):
+        self.shoulder = 'arm{0}motor1'.format(params['leg'])
         self.elbow = 'arm{0}motor2'.format(params['leg'])
         self.wrist = 'arm{0}motor3'.format(params['leg'])
+
+        self.l0 = int(params['l0'])
+        self.l1 = int(params['l1'])
+        self.l2 = int(params['l2'])
+
         self.max_speed = int(params['max_speed'])
-        #try:
-        #	self.innermodel = InnerModel(params["InnerModelPath"])
-        #except:
-        #	traceback.print_exc()
-        #	print "Error reading config params"
+
         print 'Iniciado con exito'
         return True
         
     @QtCore.Slot()
     def compute(self):
-        alpha= self.jointmotor_proxy.getMotorState(self.elbow).pos
-        beta= self.jointmotor_proxy.getMotorState(self.wrist).pos
-        if abs(alpha) <= pi /2 and abs(beta) <= pi /2:
-            vAngle = self.invJacobian([alpha, beta], [self.l1, self.l2])*np.array([[self.x] ,[self.y]])
-            print vAngle[0].item()
-            print vAngle[1].item()
-            g0 = MotorGoalVelocity()
-            g0.name = self.elbow
-            g0.velocity = vAngle[0].item()
+        a0= self.jointmotor_proxy.getMotorState(self.shoulder).pos
+        a1= self.jointmotor_proxy.getMotorState(self.elbow).pos
+        a2= self.jointmotor_proxy.getMotorState(self.wrist).pos
 
-            g1 = MotorGoalVelocity()
-            g1.name = self.wrist
-            g1.velocity = vAngle[1].item()
-            
-            self.jointmotor_proxy.setVelocity(g0) 
-            self.jointmotor_proxy.setVelocity(g1) 
-        
-        
-#  if self.x != 0.0 or self.y != 0.0 :
-#     alphaOld = self.jointmotor_proxy.getMotorState(self.elbow).pos
-#      betaOld = self.jointmotor_proxy.getMotorState(self.wrist).pos
-#      xOld, yOld = self.dk(alphaOld, betaOld)
-#      alpha, beta = self.ik(self.x+xOld , self.y+yOld)
-    
-#      g1 = MotorGoalPosition()
-#      g1.name=self.elbow
-#      g1.position=alpha
-#      g1.maxSpeed=self.max_speed
-    
-#      g2 = MotorGoalPosition()
-#      g2.name=self.wrist
-#      g2.position=beta
-#      g2.maxSpeed=self.max_speed
-    
-#     self.jointmotor_proxy.setPosition(g1)
-#      self.jointmotor_proxy.setPosition(g2)
+        # if abs(a0) <= pi /2 and abs(a1) <= pi /2 and abs(a2) <= pi /2:
+        vAngle = self.invJacobian(a0, a1, a2)*np.array([[self.x], [self.y], [self.z]])
+        # print vAngle[0].item()
+        # print vAngle[1].item()
+        # print vAngle[2].item()
+
+        g0 = MotorGoalVelocity()
+        g0.name = self.shoulder
+        g0.velocity = vAngle[0].item()
+
+        g1 = MotorGoalVelocity()
+        g1.name = self.elbow
+        g1.velocity = vAngle[1].item()
+
+        g2 = MotorGoalVelocity()
+        g2.name = self.wrist
+        g2.velocity = vAngle[2].item()
+
+        self.jointmotor_proxy.setVelocity(g0)
+        self.jointmotor_proxy.setVelocity(g1)
+        self.jointmotor_proxy.setVelocity(g2)
 
         return True
 
+    # @QtCore.Slot()
+    # def compute(self):
+    #
+    #     a1 = self.jointmotor_proxy.getMotorState(self.elbow).pos
+    #     a2 = self.jointmotor_proxy.getMotorState(self.wrist).pos
+    #
+    #
+    #     vAngle = self.OldinvJacobian((a1, a2), (self.l1, self.l2)) * np.array([[self.x], [self.y]])
+    #     # print vAngle[0].item()
+    #     # print vAngle[1].item()
+    #
+    #     g1 = MotorGoalVelocity()
+    #     g1.name = self.elbow
+    #     g1.velocity = vAngle[0].item()
+    #
+    #     g2 = MotorGoalVelocity()
+    #     g2.name = self.wrist
+    #     g2.velocity = vAngle[1].item()
+    #
+    #     self.jointmotor_proxy.setVelocity(g1)
+    #     self.jointmotor_proxy.setVelocity(g2)
 
+        return True
     #
     # sendData
     #
     def sendData(self, data):
-        self.x = float(data.axes[0].value)
-        self.y = float(data.axes[1].value)
-        
-    def dk(self, alpha, beta):
-        l1 = 1
-        l2 = 1
-        x = l1 * cos(alpha) + l2 * cos(alpha + beta)
-        y = l1 * sin(alpha) + l2 * sin(alpha + beta)
-        return x, y
+        self.x = 0
+        #self.x = float(data.axes[0].value)*10
+        self.y = float(data.axes[1].value)*10
+        self.y = 0
+        self.z = float(data.axes[2].value)*10
 
-    def ik(self, x, y):
-        try:
-            r2 = pow(x, 2) + pow(y, 2)
-            r = sqrt(r2)
-            if r <= self.l1 + self.l2:
-                numerador = -r2 + pow(self.l1, 2) + pow(self.l2, 2)
-                cosBetaP = numerador / (2 * self.l1 * self.l2)
-                radicando = 1 - pow(cosBetaP, 2)
-                senoBetaP = sqrt(radicando)
-                betaP = 0.0
-                if cosBetaP != 0:
-                    betaP = atan(senoBetaP / cosBetaP)
-                else:
-                    betaP = asin(senoBetaP)
+        for b in data.buttons:
+            if b.clicked:
+                a0 = self.jointmotor_proxy.getMotorState(self.shoulder).pos
+                a1 = self.jointmotor_proxy.getMotorState(self.elbow).pos
+                a2 = self.jointmotor_proxy.getMotorState(self.wrist).pos
+                self.dk(a0, a1,a2)
+                break
 
-                senoAlphaP = self.l2 * senoBetaP / r
-                radicando = 1 - pow(senoAlphaP, 2)
-                cosAlphaP = sqrt(radicando)
-                alphaP = 0.0
-                if cosAlphaP != 0:
-                    alphaP = atan(senoAlphaP / cosAlphaP)
-                else:
-                    alpha = asin(senoAlphaP)
 
-                gama = 0.0
-                # if r2 != 0: TODO
-                #     gama = asin(y / sqrt(r2))
-                if x > 0:
-                    gama = atan(y / x)
-                elif x == 0:
-                    gama = asin(y / r)
-                elif y >= 0:
-                    gama = (pi / 2) - atan(y / x)
-                else:
-                    gama = -pi + atan(y / x)
+    def dk(self, a0, a1, a2):
+        x = (self.l0 + self.l1 * cos(a1) + self.l2 * cos(a1 + a2)) * cos(a0)
+        y = (self.l0 + self.l1 * cos(a1) + self.l2 * cos(a1 + a2)) * sin(a0)
+        z = self.l1 * sin(a1) + self.l2 * sin(a1 + a2)
 
-                alpha = gama + alphaP
-                beta = 0.0
-                # TODO esta parte es problematica: cuando betaP deberia ser 0 pero como hay cierta imprecision no lo es
-                if betaP <= 0:
-                    beta = betaP
-                else:
-                    beta = betaP - pi
+        print "x = {0}".format(x)
+        print "y = {0}".format(y)
+        print "z = {0}".format(z)
+        print "......................."
 
-                return alpha, beta
-            return 0.0, 0.0
-        except Exception, e:
-            traceback.print_exc()
-            print e
-            print '+x={0}'.format(x)
-            print '+y={0}'.format(y)
-            print '+r={0}'.format(r)
-            return 0.0, 0.0 
             
-    def invJacobian(self, A, L):
+    def OldinvJacobian(self, A, L): # todo borrar
         dHxdA1 = -L[0]*sin(A[0]) - L[1]*sin(A[0]+A[1])
         dHxdA2 = -L[1]*sin(A[0]+A[1])
         dHydA1 = L[0]*cos(A[0]) + L[1]*cos(A[0]+A[1])
@@ -171,5 +148,19 @@ class SpecificWorker(GenericWorker):
         J = np.matrix([[dHxdA1,dHxdA2],[dHydA1,dHydA2]])
         iJ= np.linalg.inv(J)
         return iJ
-        
-        
+    def invJacobian(self, a0, a1, a2):
+
+        dXdA0 = -(self.l0 + self.l1*cos(a1) + self.l2*cos(a1 + a2))*sin(a0)
+        dXdA1 = (-self.l1*sin(a1) - self.l2*sin(a1 + a2))*cos(a0)
+        dXdA2 = -self.l2*sin(a1 + a2)*cos(a0)
+
+        dYdA0 = (self.l0 + self.l1*cos(a1) + self.l2*cos(a1 + a2))*cos(a0)
+        dYdA1 = (-self.l1*sin(a1) - self.l2*sin(a1 + a2))*sin(a0)
+        dYdA2 = -self.l2*sin(a0)*sin(a1 + a2)
+
+        dZdA0 = 0
+        dZdA1 = self.l1*cos(a1) + self.l2*cos(a1 + a2)
+        dZdA2 = self.l2*cos(a1 + a2)
+
+        J = np.matrix([[dXdA0, dXdA1, dXdA2], [dYdA0, dYdA1, dYdA2],[dZdA0, dZdA1, dZdA2]])
+        return np.linalg.inv(J)

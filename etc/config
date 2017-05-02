@@ -17,5 +17,13 @@ Ice.Trace.Protocol=0
 Ice.ACM.Client=10
 Ice.ACM.Server=10
 
-leg=1
+#leg number
+leg=3
+#leg segments length
+l0=52
+l1=66
+#l1=66.1098
+l2=125
+#l2=125.948
+
 max_speed=1
